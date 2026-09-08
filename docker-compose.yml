@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: sfa_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sfa
+      POSTGRES_PASSWORD: sfa_dev_local_only
+      POSTGRES_DB: smart_farming
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sfa -d smart_farming"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
