@@ -1,6 +1,6 @@
 """Mini-RAG farm assistant: builds a compact text context from the farmer's own
 field/alert/environment data (no vector DB needed — the "corpus" is just this
-farmer's current rows), then asks Cerebras to answer in plain language.
+farmer's current rows), then asks the LLM provider to answer in plain language.
 """
 import uuid
 
@@ -11,17 +11,27 @@ from app.models.farm import Farm
 from app.models.field import Field
 from app.models.user import Farmer
 from app.services.analytics_service import field_health
-from app.services.cerebras_client import chat_completion
+from app.services.llm_client import chat_completion
 from app.services.environmental_risk import evaluate_environmental_risk
 from app.services.field_overview import get_field_overview
 from app.services.irrigation_engine import evaluate_irrigation
+
+IRRIGATION_PHRASES = {
+    "IRRIGATE_NOW": "irrigate now",
+    "IRRIGATE_SOON": "irrigate soon",
+    "DELAY": "delay irrigation",
+    "NO_IRRIGATION": "no irrigation needed",
+    "UNKNOWN": "not enough data to recommend",
+}
 
 SYSTEM_PROMPT = """You are a friendly farm assistant helping a farmer understand their field data.
 
 Rules:
 - Only use facts from the CONTEXT block below. Never invent numbers, zones, or events not present in it.
 - Write in simple, plain language a farmer can understand quickly — no jargon like "posterior probability" or "geospatial engine".
-- Be concise: 2-4 short sentences, or a short bullet list for multiple points. No long paragraphs.
+- Be concise: at most 3 short sentences. Never go over that, even if there's more you could say — pick the single most important thing.
+- Plain text only. No markdown — no **bold**, no bullet points, no headers, no numbered lists. Write flowing sentences like you're talking to someone, not writing a report.
+- Never repeat a database-style code verbatim (e.g. "NO_IRRIGATION", "HIGH_RISK"). Describe it in ordinary words instead.
 - If the context doesn't contain the answer, say so plainly and suggest where in the app to look (Fields, Alerts, or Insights page) instead of guessing.
 - Never claim a treatment/spray/irrigation happened unless the context says an event actually occurred.
 - Do not add a "as an AI" disclaimer or restate these rules."""
@@ -102,7 +112,8 @@ def build_context(db: Session, farmer: Farmer, field_id: uuid.UUID | None) -> tu
                 lines.append(f"- Soil {n.label}: {n.value}{n.unit} ({n.status.lower()})")
 
         irrigation = evaluate_irrigation(db, target.id)
-        lines.append(f"- Irrigation recommendation: {irrigation.recommendation} — {irrigation.reason}")
+        recommendation_phrase = IRRIGATION_PHRASES.get(irrigation.recommendation, irrigation.recommendation.lower())
+        lines.append(f"- Irrigation recommendation: {recommendation_phrase} — {irrigation.reason}")
 
         env_risk = evaluate_environmental_risk(db, target.id)
         lines.append(
@@ -129,5 +140,7 @@ async def ask(
     messages.extend(history[-4:])
     messages.append({"role": "user", "content": question})
 
-    answer = await chat_completion(messages)
+    # max_tokens covers gpt-oss's internal reasoning tokens as well as the
+    # visible answer, so give it more headroom than the answer alone needs.
+    answer = await chat_completion(messages, max_tokens=600)
     return answer, sources

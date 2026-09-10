@@ -13,9 +13,11 @@ class Settings(BaseSettings):
     openweather_api_key: str = ""
     openweather_base_url: str = "https://api.openweathermap.org/data/2.5"
 
-    cerebras_api_key: str = ""
-    cerebras_base_url: str = "https://api.cerebras.ai/v1"
-    cerebras_model: str = "gpt-oss-120b"
+    # Assistant LLM — any OpenAI-compatible chat completions provider.
+    # Currently Groq; swapping providers only needs these three values changed.
+    llm_api_key: str = ""
+    llm_base_url: str = "https://api.groq.com/openai/v1"
+    llm_model: str = "openai/gpt-oss-20b"
 
     cors_origins: str = "http://localhost:5173"
     default_zone_resolution_m: float = 10.0

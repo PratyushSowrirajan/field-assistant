@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.models.user import Farmer
 from app.schemas.assistant import AssistantAskRequest, AssistantAskResponse
 from app.services import assistant
-from app.services.cerebras_client import CerebrasError
+from app.services.llm_client import LLMError
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
 logger = logging.getLogger(__name__)
@@ -34,8 +34,8 @@ async def ask_assistant(
             payload.field_id,
             [t.model_dump() for t in payload.history],
         )
-    except CerebrasError as exc:
-        logger.warning("assistant: cerebras call failed: %s", exc)
+    except LLMError as exc:
+        logger.warning("assistant: LLM call failed: %s", exc)
         raise HTTPException(
             status_code=502,
             detail="The assistant isn't available right now. Please try again in a moment.",
