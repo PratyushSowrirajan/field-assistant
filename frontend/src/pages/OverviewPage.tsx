@@ -1,20 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { HealthBadge } from "@/components/badges";
-import { HealthRing, NutrientGauge, TrendArrow } from "@/components/Gauges";
+import { HealthRing, NutrientBar, Sparkline, TrendArrow } from "@/components/Gauges";
 import { useAllFields, useFarms, useFieldOverview } from "@/lib/queries";
-
-const NUTRIENT_DISPLAY_MAX: Record<string, number> = {
-  NITROGEN: 130,
-  PHOSPHORUS: 65,
-  POTASSIUM: 320,
-};
 
 const STATUS_STYLES: Record<string, string> = {
   LOW: "bg-risk-attention/15 text-risk-attention",
   OPTIMAL: "bg-risk-healthy/15 text-risk-healthy",
   HIGH: "bg-risk-critical/15 text-risk-critical",
   UNKNOWN: "bg-ink/10 text-ink/50",
+};
+
+const TREND_COLOR: Record<string, string> = {
+  UP: "#D97B2B",
+  DOWN: "#1F3D2B",
+  FLAT: "#8A5A3B",
 };
 
 function timeAgo(iso: string | null): string {
@@ -26,6 +26,16 @@ function timeAgo(iso: string | null): string {
   return `${hrs} hr${hrs > 1 ? "s" : ""} ago`;
 }
 
+function useSecondsSince(timestamp: number | undefined) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!timestamp) return null;
+  return Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+}
+
 export default function OverviewPage() {
   const { data: farms } = useFarms();
   const { data: allFields } = useAllFields(farms);
@@ -34,7 +44,8 @@ export default function OverviewPage() {
   const activeFieldId = fieldId ?? fields[0]?.id;
   const field = fields.find((f) => f.id === activeFieldId);
 
-  const { data: overview, isLoading } = useFieldOverview(activeFieldId);
+  const { data: overview, isLoading, dataUpdatedAt } = useFieldOverview(activeFieldId);
+  const secondsSinceSync = useSecondsSince(dataUpdatedAt);
 
   if (farms && fields.length === 0) {
     return (
@@ -66,7 +77,7 @@ export default function OverviewPage() {
               ))}
             </select>
           )}
-          <ConnectionPill status={overview?.connection_status} />
+          <ConnectionPill status={overview?.connection_status} secondsSinceSync={secondsSinceSync} />
         </div>
       </div>
 
@@ -75,7 +86,7 @@ export default function OverviewPage() {
       {overview && field && (
         <>
           {/* Field header + health */}
-          <div className="card flex flex-wrap items-center gap-5 sm:flex-nowrap">
+          <div className="card animate-fade-in-up flex flex-wrap items-center gap-5 sm:flex-nowrap">
             <HealthRing score={overview.health_score} status={overview.health_status} />
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium uppercase tracking-wide text-ink/50">
@@ -100,7 +111,7 @@ export default function OverviewPage() {
           </div>
 
           {/* Latest AI prediction */}
-          <div className="card">
+          <div className="card animate-fade-in-up" style={{ animationDelay: "60ms" }}>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-base font-semibold text-forest">Latest AI prediction</h2>
               {overview.latest_prediction?.confidence_label && (
@@ -141,8 +152,12 @@ export default function OverviewPage() {
 
           {/* Environment tiles */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {overview.environment.map((tile) => (
-              <div key={tile.label} className="card">
+            {overview.environment.map((tile, i) => (
+              <div
+                key={tile.label}
+                className="card animate-fade-in-up"
+                style={{ animationDelay: `${120 + i * 60}ms` }}
+              >
                 <div className="flex items-start justify-between">
                   <p className="text-3xl font-bold text-ink">
                     {tile.value === null ? "—" : tile.value.toFixed(1)}
@@ -150,7 +165,8 @@ export default function OverviewPage() {
                   </p>
                   <TrendArrow trend={tile.trend} />
                 </div>
-                <p className="mt-1 text-xs font-medium uppercase tracking-wide text-ink/50">{tile.label}</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink/50">{tile.label}</p>
+                <Sparkline values={tile.history} color={TREND_COLOR[tile.trend]} />
               </div>
             ))}
           </div>
@@ -159,16 +175,33 @@ export default function OverviewPage() {
           <div>
             <h2 className="mb-2 text-base font-semibold text-forest">Soil nutrients</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {overview.nutrients.map((n) => (
-                <div key={n.nutrient} className="card">
+              {overview.nutrients.map((n, i) => (
+                <div
+                  key={n.nutrient}
+                  className="card animate-fade-in-up"
+                  style={{ animationDelay: `${300 + i * 60}ms` }}
+                >
                   <div className="mb-1 flex items-center justify-between">
                     <p className="text-xs font-medium uppercase tracking-wide text-ink/50">{n.label}</p>
                     <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${STATUS_STYLES[n.status]}`}>
                       {n.status}
                     </span>
                   </div>
-                  <NutrientGauge value={n.value} displayMax={NUTRIENT_DISPLAY_MAX[n.nutrient]} unit="" />
-                  <p className="text-center text-xs text-ink/50">
+                  <p className="text-2xl font-bold text-ink">
+                    {n.value === null ? "—" : n.value.toFixed(0)}
+                    <span className="text-sm font-medium text-ink/50"> {n.unit}</span>
+                  </p>
+                  <NutrientBar
+                    value={n.value}
+                    lowThreshold={n.low_threshold}
+                    highThreshold={n.high_threshold}
+                    displayMax={n.display_max}
+                    status={n.status}
+                  />
+                  <div className="mt-3">
+                    <Sparkline values={n.history} color="#7A7550" height={26} />
+                  </div>
+                  <p className="mt-1 text-center text-xs text-ink/50">
                     {n.value === null
                       ? "No reading yet"
                       : `${n.delta_vs_previous ? (n.delta_vs_previous > 0 ? "+" : "") + n.delta_vs_previous.toFixed(1) + " " : ""}${n.unit} vs last`}
@@ -183,18 +216,22 @@ export default function OverviewPage() {
   );
 }
 
-function ConnectionPill({ status }: { status?: string }) {
+function ConnectionPill({ status, secondsSinceSync }: { status?: string; secondsSinceSync: number | null }) {
   if (!status) return null;
-  const map: Record<string, { label: string; dot: string; text: string }> = {
-    CONNECTED: { label: "Live", dot: "bg-leaf", text: "text-leaf-dark" },
-    OFFLINE: { label: "Rover offline", dot: "bg-ink/30", text: "text-ink/50" },
-    NO_ROVER: { label: "No rover assigned", dot: "bg-ink/20", text: "text-ink/40" },
+  const map: Record<string, { label: string; dot: string; text: string; live: boolean }> = {
+    CONNECTED: { label: "Live", dot: "bg-leaf", text: "text-leaf-dark", live: true },
+    OFFLINE: { label: "Rover offline", dot: "bg-ink/30", text: "text-ink/50", live: false },
+    NO_ROVER: { label: "No rover assigned", dot: "bg-ink/20", text: "text-ink/40", live: false },
   };
   const s = map[status] ?? map.NO_ROVER;
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full bg-sand px-3 py-1 text-xs font-semibold ${s.text}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+    <span className={`inline-flex items-center gap-2 rounded-full bg-sand px-3 py-1 text-xs font-semibold ${s.text}`}>
+      <span className="relative flex h-2.5 w-2.5">
+        {s.live && <span className={`absolute inline-flex h-full w-full animate-ping rounded-full ${s.dot} opacity-60`} />}
+        <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${s.dot}`} />
+      </span>
       {s.label}
+      {secondsSinceSync !== null && <span className="font-normal text-ink/40">· synced {secondsSinceSync}s ago</span>}
     </span>
   );
 }

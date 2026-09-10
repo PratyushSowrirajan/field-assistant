@@ -40,12 +40,16 @@ def _nutrient_status(nutrient: str, value: float | None) -> str:
     return "OPTIMAL"
 
 
-def _latest_two(db: Session, field_id, reading_type: str) -> list[EnvironmentalReading]:
+HISTORY_POINTS = 8
+
+
+def _recent_readings(db: Session, field_id, reading_type: str) -> list[EnvironmentalReading]:
+    """Newest first — callers reverse for a chronological sparkline."""
     return (
         db.query(EnvironmentalReading)
         .filter(EnvironmentalReading.field_id == field_id, EnvironmentalReading.reading_type == reading_type)
         .order_by(EnvironmentalReading.timestamp.desc())
-        .limit(2)
+        .limit(HISTORY_POINTS)
         .all()
     )
 
@@ -134,21 +138,22 @@ def get_field_overview(db: Session, field: Field) -> FieldOverviewOut:
 
     environment: list[EnvironmentTile] = []
     for reading_type, meta in ENV_READING_TYPES.items():
-        rows = _latest_two(db, field.id, reading_type)
+        rows = _recent_readings(db, field.id, reading_type)
         environment.append(
             EnvironmentTile(
                 label=meta["label"],
                 value=rows[0].value if rows else None,
                 unit=meta["unit"],
                 trend=_trend(rows),
+                history=[r.value for r in reversed(rows)],
             )
         )
 
     nutrients: list[NutrientTile] = []
     for nutrient, meta in NUTRIENT_RANGES.items():
-        rows = _latest_two(db, field.id, nutrient)
+        rows = _recent_readings(db, field.id, nutrient)
         value = rows[0].value if rows else None
-        delta = round(rows[0].value - rows[1].value, 1) if len(rows) == 2 else None
+        delta = round(rows[0].value - rows[1].value, 1) if len(rows) >= 2 else None
         nutrients.append(
             NutrientTile(
                 nutrient=nutrient,
@@ -157,6 +162,10 @@ def get_field_overview(db: Session, field: Field) -> FieldOverviewOut:
                 unit=meta["unit"],
                 status=_nutrient_status(nutrient, value),
                 delta_vs_previous=delta,
+                low_threshold=meta["low"],
+                high_threshold=meta["high"],
+                display_max=round(meta["high"] * 1.6, 1),
+                history=[r.value for r in reversed(rows)],
             )
         )
 

@@ -259,6 +259,7 @@ export interface EnvironmentTile {
   value: number | null;
   unit: string;
   trend: Trend;
+  history: number[];
 }
 
 export interface NutrientTile {
@@ -268,6 +269,10 @@ export interface NutrientTile {
   unit: string;
   status: "LOW" | "OPTIMAL" | "HIGH" | "UNKNOWN";
   delta_vs_previous: number | null;
+  low_threshold: number;
+  high_threshold: number;
+  display_max: number;
+  history: number[];
 }
 
 export interface LatestPrediction {

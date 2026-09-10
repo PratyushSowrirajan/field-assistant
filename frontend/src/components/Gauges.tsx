@@ -8,17 +8,7 @@ const RISK_COLORS: Record<string, string> = {
   CRITICAL: "#A32F26",
 };
 
-function polarPoint(cx: number, cy: number, r: number, angleDeg: number) {
-  const rad = (angleDeg * Math.PI) / 180;
-  return { x: cx + r * Math.cos(rad), y: cy - r * Math.sin(rad) };
-}
-
-function arcPath(cx: number, cy: number, r: number, startDeg: number, endDeg: number) {
-  const start = polarPoint(cx, cy, r, startDeg);
-  const end = polarPoint(cx, cy, r, endDeg);
-  const largeArc = Math.abs(startDeg - endDeg) > 180 ? 1 : 0;
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 1 ${end.x} ${end.y}`;
-}
+const NEEDS_ATTENTION = new Set(["ATTENTION", "HIGH_RISK", "CRITICAL"]);
 
 /** Circular "health score" ring, e.g. the 78/100 dial on the field header. */
 export function HealthRing({ score, status }: { score: number; status: string }) {
@@ -27,9 +17,10 @@ export function HealthRing({ score, status }: { score: number; status: string })
   const r = 42;
   const circumference = 2 * Math.PI * r;
   const offset = circumference * (1 - clamped / 100);
+  const urgent = NEEDS_ATTENTION.has(status);
 
   return (
-    <div className="relative h-28 w-28 shrink-0">
+    <div className={`relative h-28 w-28 shrink-0 ${urgent ? "animate-pulse" : ""}`}>
       <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
         <circle cx="50" cy="50" r={r} fill="none" stroke="#F1E9D8" strokeWidth="10" />
         <circle
@@ -42,7 +33,7 @@ export function HealthRing({ score, status }: { score: number; status: string })
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+          style={{ transition: "stroke-dashoffset 0.8s ease" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -53,60 +44,102 @@ export function HealthRing({ score, status }: { score: number; status: string })
   );
 }
 
-const NUTRIENT_ZONE_COLORS = ["#D97B2B", "#4C7A3F", "#C1502E"]; // low, optimal, high
-
-/** Semi-circle "speedometer" gauge for a nutrient reading, with a low/optimal/high band. */
-export function NutrientGauge({
-  value,
-  displayMax,
-  unit,
+/** Small line-and-fill chart of recent readings — the actual "how is it changing" signal. */
+export function Sparkline({
+  values,
+  color,
+  height = 32,
+  width = 120,
 }: {
-  value: number | null;
-  displayMax: number;
-  unit: string;
+  values: number[];
+  color: string;
+  height?: number;
+  width?: number;
 }) {
-  const cx = 60;
-  const cy = 58;
-  const r = 46;
-  const fraction = value === null ? 0 : Math.max(0, Math.min(1, value / displayMax));
-  const needleAngle = 180 - fraction * 180;
-  const needleTip = polarPoint(cx, cy, r - 10, needleAngle);
+  if (values.length < 2) {
+    return <div style={{ height }} className="flex items-center text-[11px] text-ink/30">Not enough data yet</div>;
+  }
 
-  const bands = [
-    { start: 180, end: 120 },
-    { start: 120, end: 60 },
-    { start: 60, end: 0 },
-  ];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pad = 4;
+  const step = (width - pad * 2) / (values.length - 1);
+
+  const points = values.map((v, i) => {
+    const x = pad + i * step;
+    const y = pad + (1 - (v - min) / span) * (height - pad * 2);
+    return [x, y];
+  });
+
+  const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
+  const areaPath = `${linePath} L ${points[points.length - 1][0]} ${height} L ${points[0][0]} ${height} Z`;
+  const last = points[points.length - 1];
+  const gradientId = `spark-${color.replace("#", "")}`;
 
   return (
-    <svg viewBox="0 0 120 68" className="h-24 w-full">
-      {bands.map((b, i) => (
-        <path
-          key={i}
-          d={arcPath(cx, cy, r, b.start, b.end)}
-          fill="none"
-          stroke={NUTRIENT_ZONE_COLORS[i]}
-          strokeWidth="9"
-          strokeLinecap="butt"
-          opacity={value === null ? 0.25 : 0.85}
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" style={{ height }} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${gradientId})`} stroke="none" />
+      <path d={linePath} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={last[0]} cy={last[1]} r="2.5" fill={color} />
+      <circle cx={last[0]} cy={last[1]} r="5" fill={color} opacity="0.35">
+        <animate attributeName="r" values="4;7;4" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.35;0;0.35" dur="2s" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  );
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  LOW: "#D97B2B",
+  OPTIMAL: "#4C7A3F",
+  HIGH: "#A32F26",
+  UNKNOWN: "#B9B199",
+};
+
+/** Horizontal low/optimal/high threshold bar with a marker — reads faster than a
+ * speedometer dial and only needs the width of a card, not a whole gauge face. */
+export function NutrientBar({
+  value,
+  lowThreshold,
+  highThreshold,
+  displayMax,
+  status,
+}: {
+  value: number | null;
+  lowThreshold: number;
+  highThreshold: number;
+  displayMax: number;
+  status: string;
+}) {
+  const color = STATUS_COLOR[status] ?? STATUS_COLOR.UNKNOWN;
+  const lowPct = Math.min(100, (lowThreshold / displayMax) * 100);
+  const highPct = Math.min(100, (highThreshold / displayMax) * 100);
+  const markerPct = value === null ? null : Math.max(2, Math.min(98, (value / displayMax) * 100));
+
+  return (
+    <div className="relative pt-3">
+      <div className="relative h-2 w-full overflow-hidden rounded-full">
+        <div className="absolute inset-y-0 left-0 bg-risk-attention/60" style={{ width: `${lowPct}%` }} />
+        <div
+          className="absolute inset-y-0 bg-risk-healthy/60"
+          style={{ left: `${lowPct}%`, width: `${highPct - lowPct}%` }}
         />
-      ))}
-      {value !== null && (
-        <line
-          x1={cx}
-          y1={cy}
-          x2={needleTip.x}
-          y2={needleTip.y}
-          stroke="#26291F"
-          strokeWidth="2.5"
-          strokeLinecap="round"
+        <div className="absolute inset-y-0 bg-risk-critical/60" style={{ left: `${highPct}%`, right: 0 }} />
+      </div>
+      {markerPct !== null && (
+        <div
+          className="absolute top-0 h-4 w-4 -translate-x-1/2 rounded-full border-2 border-white shadow"
+          style={{ left: `${markerPct}%`, backgroundColor: color, transition: "left 0.6s ease" }}
         />
       )}
-      <circle cx={cx} cy={cy} r="3.5" fill="#26291F" />
-      <text x={cx} y={cy - 14} textAnchor="middle" className="fill-ink text-[13px] font-bold">
-        {value === null ? "—" : `${value.toFixed(0)}${unit}`}
-      </text>
-    </svg>
+    </div>
   );
 }
 
@@ -115,3 +148,5 @@ export function TrendArrow({ trend }: { trend: Trend }) {
   if (trend === "DOWN") return <span className="text-forest">↓</span>;
   return <span className="text-ink/30">→</span>;
 }
+
+export { STATUS_COLOR as NUTRIENT_STATUS_COLOR };

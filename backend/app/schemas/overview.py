@@ -11,6 +11,7 @@ class EnvironmentTile(BaseModel):
     value: float | None
     unit: str
     trend: Trend
+    history: list[float]  # recent readings, oldest -> newest, for a sparkline
 
 
 class NutrientTile(BaseModel):
@@ -20,6 +21,10 @@ class NutrientTile(BaseModel):
     unit: str
     status: str  # LOW | OPTIMAL | HIGH | UNKNOWN
     delta_vs_previous: float | None
+    low_threshold: float
+    high_threshold: float
+    display_max: float
+    history: list[float]
 
 
 class LatestPrediction(BaseModel):
