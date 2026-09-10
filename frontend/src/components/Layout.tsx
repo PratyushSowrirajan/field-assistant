@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", end: true },
+  { to: "/overview", label: "Overview" },
   { to: "/fields", label: "Fields" },
   { to: "/live", label: "Live Rover" },
   { to: "/insights", label: "Insights" },

@@ -30,6 +30,7 @@ def _field_to_out(field: Field) -> FieldOut:
         name=field.name,
         crop_type=field.crop_type,
         crop_variety=field.crop_variety,
+        growth_stage=field.growth_stage,
         planting_date=field.planting_date,
         expected_harvest_date=field.expected_harvest_date,
         area_m2=field.area_m2,
@@ -58,6 +59,7 @@ def create_field(payload: FieldCreate, farm: Farm = Depends(get_owned_farm), db:
         name=payload.name,
         crop_type=payload.crop_type,
         crop_variety=payload.crop_variety,
+        growth_stage=payload.growth_stage,
         planting_date=payload.planting_date,
         expected_harvest_date=payload.expected_harvest_date,
         zone_resolution_m=payload.zone_resolution_m or settings.default_zone_resolution_m,
@@ -89,7 +91,7 @@ def get_field(field: Field = Depends(get_owned_field)):
 
 @router.patch("/fields/{field_id}", response_model=FieldOut)
 def update_field(payload: FieldUpdate, field: Field = Depends(get_owned_field), db: Session = Depends(get_db)):
-    for attr in ("name", "crop_type", "crop_variety", "planting_date", "expected_harvest_date", "archived"):
+    for attr in ("name", "crop_type", "crop_variety", "growth_stage", "planting_date", "expected_harvest_date", "archived"):
         value = getattr(payload, attr)
         if value is not None:
             setattr(field, attr, value)

@@ -9,6 +9,7 @@ import InsightsPage from "@/pages/InsightsPage";
 import LiveRoverPage from "@/pages/LiveRoverPage";
 import LoginPage from "@/pages/LoginPage";
 import NewFieldPage from "@/pages/NewFieldPage";
+import OverviewPage from "@/pages/OverviewPage";
 import RegisterPage from "@/pages/RegisterPage";
 // Isolated, removable feature — see src/features/leaf-check/README.md
 import LeafCheckPage from "@/features/leaf-check/LeafCheckPage";
@@ -42,6 +43,7 @@ export default function App() {
         }
       >
         <Route path="/" element={<HomePage />} />
+        <Route path="/overview" element={<OverviewPage />} />
         <Route path="/fields" element={<FieldsPage />} />
         <Route path="/fields/new" element={<NewFieldPage />} />
         <Route path="/fields/:fieldId" element={<FieldDetailPage />} />

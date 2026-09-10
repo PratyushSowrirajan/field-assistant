@@ -19,6 +19,7 @@ class Field(UUIDPKMixin, TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(120))
     crop_type: Mapped[str | None] = mapped_column(String(80), nullable=True)
     crop_variety: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    growth_stage: Mapped[str | None] = mapped_column(String(40), nullable=True)
     planting_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     expected_harvest_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 

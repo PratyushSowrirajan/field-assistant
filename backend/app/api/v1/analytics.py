@@ -12,7 +12,9 @@ from app.schemas.analytics import (
     TreatmentCoverageOut,
     YieldRiskOut,
 )
+from app.schemas.overview import FieldOverviewOut
 from app.services import analytics_service
+from app.services.field_overview import get_field_overview
 
 router = APIRouter(prefix="/fields/{field_id}", tags=["analytics"])
 
@@ -26,6 +28,14 @@ VALID_METRICS = {
     "irrigation",
     "treatment",
 }
+
+
+@router.get("/overview", response_model=FieldOverviewOut)
+def get_overview(field: Field = Depends(get_owned_field), db: Session = Depends(get_db)):
+    """Single aggregated payload for the consolidated Overview dashboard —
+    field header, latest AI prediction, environment tiles, nutrient tiles —
+    so the frontend doesn't have to stitch together five separate calls."""
+    return get_field_overview(db, field)
 
 
 @router.get("/health", response_model=FieldHealthOut)

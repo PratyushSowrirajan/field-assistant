@@ -100,6 +100,25 @@ def main():
         "device_id": device_id, "field_id": field["id"], "event": "SCAN_START", "timestamp": now_iso(),
     })
 
+    def send_reading(reading_type: str, value: float, unit: str):
+        device.post("/edge/sensors", json={
+            "device_id": device_id,
+            "timestamp": now_iso(),
+            "reading_type": reading_type,
+            "value": round(value, 1),
+            "unit": unit,
+            "field_id": field["id"],
+        })
+
+    # Slow-drifting environment/soil readings, independent of the fast-moving
+    # position/detection stream — populates the Overview dashboard's env
+    # tiles and nutrient gauges with a believable trend over the run.
+    soil_moisture, temperature, humidity = 40.0, 29.0, 55.0
+    nitrogen, phosphorus, potassium = 55.0, 28.0, 140.0
+
+    def drift(value, step, lo, hi):
+        return max(lo, min(hi, value + random.uniform(-step, step)))
+
     battery = 95.0
     try:
         for lap in range(args.laps):
@@ -107,6 +126,21 @@ def main():
                 jitter = lambda: random.uniform(-0.00002, 0.00002)
                 lat_j, lon_j = lat + jitter(), lon + jitter()
                 battery = max(20.0, battery - 0.15)
+
+                soil_moisture = drift(soil_moisture, 1.2, 15, 70)
+                temperature = drift(temperature, 0.3, 22, 40)
+                humidity = drift(humidity, 1.5, 30, 90)
+                send_reading("SOIL_MOISTURE", soil_moisture, "%")
+                send_reading("AIR_TEMPERATURE", temperature, "C")
+                send_reading("RELATIVE_HUMIDITY", humidity, "%")
+
+                if i % 4 == 0:
+                    nitrogen = drift(nitrogen, 3, 10, 110)
+                    phosphorus = drift(phosphorus, 1.5, 5, 55)
+                    potassium = drift(potassium, 5, 30, 260)
+                    send_reading("NITROGEN", nitrogen, "ppm")
+                    send_reading("PHOSPHORUS", phosphorus, "ppm")
+                    send_reading("POTASSIUM", potassium, "ppm")
 
                 payload = {
                     "device_id": device_id,

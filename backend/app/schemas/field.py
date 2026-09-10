@@ -10,6 +10,7 @@ class FieldCreate(BaseModel):
     name: str
     crop_type: str | None = None
     crop_variety: str | None = None
+    growth_stage: str | None = None
     planting_date: date | None = None
     expected_harvest_date: date | None = None
     boundary: GeoJSONPolygon | None = None
@@ -20,6 +21,7 @@ class FieldUpdate(BaseModel):
     name: str | None = None
     crop_type: str | None = None
     crop_variety: str | None = None
+    growth_stage: str | None = None
     planting_date: date | None = None
     expected_harvest_date: date | None = None
     archived: bool | None = None
@@ -38,6 +40,7 @@ class FieldOut(BaseModel):
     name: str
     crop_type: str | None
     crop_variety: str | None
+    growth_stage: str | None
     planting_date: date | None
     expected_harvest_date: date | None
     area_m2: float | None

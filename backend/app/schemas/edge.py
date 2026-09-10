@@ -55,7 +55,9 @@ class SensorReadingIn(BaseModel):
     device_id: str
     timestamp: datetime
     sensor_id: str | None = None
-    reading_type: Literal["SOIL_MOISTURE", "AIR_TEMPERATURE", "RELATIVE_HUMIDITY"]
+    reading_type: Literal[
+        "SOIL_MOISTURE", "AIR_TEMPERATURE", "RELATIVE_HUMIDITY", "NITROGEN", "PHOSPHORUS", "POTASSIUM"
+    ]
     value: float
     unit: str | None = None
     gps: GPSData | None = None

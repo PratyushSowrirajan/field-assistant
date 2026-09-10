@@ -251,3 +251,47 @@ export interface RoverRegisterResponse {
   device_id: string;
   device_secret: string;
 }
+
+export type Trend = "UP" | "DOWN" | "FLAT";
+
+export interface EnvironmentTile {
+  label: string;
+  value: number | null;
+  unit: string;
+  trend: Trend;
+}
+
+export interface NutrientTile {
+  nutrient: "NITROGEN" | "PHOSPHORUS" | "POTASSIUM";
+  label: string;
+  value: number | null;
+  unit: string;
+  status: "LOW" | "OPTIMAL" | "HIGH" | "UNKNOWN";
+  delta_vs_previous: number | null;
+}
+
+export interface LatestPrediction {
+  detection_type: string | null;
+  class_label: string | null;
+  zone_code: string | null;
+  confidence: number | null;
+  confidence_label: "LOW" | "MEDIUM" | "HIGH" | null;
+  message: string | null;
+  minutes_ago: number | null;
+}
+
+export interface FieldOverviewOut {
+  field_id: string;
+  field_name: string;
+  farm_name: string;
+  crop_type: string | null;
+  growth_stage: string | null;
+  area_m2: number | null;
+  health_status: HealthStatus;
+  health_score: number;
+  connection_status: "CONNECTED" | "OFFLINE" | "NO_ROVER";
+  last_scan_at: string | null;
+  latest_prediction: LatestPrediction | null;
+  environment: EnvironmentTile[];
+  nutrients: NutrientTile[];
+}

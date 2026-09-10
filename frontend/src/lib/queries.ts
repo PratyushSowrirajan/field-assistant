@@ -10,6 +10,7 @@ import type {
   Farm,
   FieldHealthOut,
   FieldOut,
+  FieldOverviewOut,
   HotspotOut,
   IrrigationRecommendationOut,
   RoverLiveState,
@@ -79,6 +80,15 @@ export function useFieldHealth(fieldId?: string) {
     queryFn: async () => (await api.get<FieldHealthOut>(`/fields/${fieldId}/health`)).data,
     enabled: !!fieldId,
     refetchInterval: 30_000,
+  });
+}
+
+export function useFieldOverview(fieldId?: string) {
+  return useQuery({
+    queryKey: ["field-overview", fieldId],
+    queryFn: async () => (await api.get<FieldOverviewOut>(`/fields/${fieldId}/overview`)).data,
+    enabled: !!fieldId,
+    refetchInterval: 15_000,
   });
 }
 
