@@ -300,3 +300,13 @@ export interface FieldOverviewOut {
   environment: EnvironmentTile[];
   nutrients: NutrientTile[];
 }
+
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface AssistantAskResponse {
+  answer: string;
+  sources: string[];
+}

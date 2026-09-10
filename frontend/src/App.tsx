@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import Layout from "@/components/Layout";
 import { useAuth } from "@/hooks/useAuth";
 import AlertsPage from "@/pages/AlertsPage";
+import AssistantPage from "@/pages/AssistantPage";
 import FieldDetailPage from "@/pages/FieldDetailPage";
 import FieldsPage from "@/pages/FieldsPage";
 import HomePage from "@/pages/HomePage";
@@ -52,6 +53,7 @@ export default function App() {
         <Route path="/alerts" element={<AlertsPage />} />
         {/* Isolated, removable feature — see src/features/leaf-check/README.md */}
         <Route path="/leaf-check" element={<LeafCheckPage />} />
+        <Route path="/assistant" element={<AssistantPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

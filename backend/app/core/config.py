@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     openweather_api_key: str = ""
     openweather_base_url: str = "https://api.openweathermap.org/data/2.5"
 
+    cerebras_api_key: str = ""
+    cerebras_base_url: str = "https://api.cerebras.ai/v1"
+    cerebras_model: str = "gpt-oss-120b"
+
     cors_origins: str = "http://localhost:5173"
     default_zone_resolution_m: float = 10.0
 

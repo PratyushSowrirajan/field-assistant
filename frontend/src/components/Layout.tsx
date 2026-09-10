@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/alerts", label: "Alerts" },
   // Isolated, removable feature — see src/features/leaf-check/README.md
   { to: "/leaf-check", label: "Leaf Check" },
+  { to: "/assistant", label: "Assistant" },
 ];
 
 export default function Layout() {

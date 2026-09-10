@@ -3,6 +3,8 @@ import { api } from "@/lib/api";
 import type {
   AdvisoryOut,
   AlertOut,
+  AssistantAskResponse,
+  ChatTurn,
   DashboardSummary,
   DecisionInsightOut,
   DetectionOut,
@@ -227,5 +229,18 @@ export function useRefreshWeather(fieldId?: string) {
       qc.invalidateQueries({ queryKey: ["env-risk", fieldId] });
       qc.invalidateQueries({ queryKey: ["field-health", fieldId] });
     },
+  });
+}
+
+export function useAskAssistant() {
+  return useMutation({
+    mutationFn: async (vars: { question: string; fieldId?: string; history: ChatTurn[] }) =>
+      (
+        await api.post<AssistantAskResponse>("/assistant/ask", {
+          question: vars.question,
+          field_id: vars.fieldId,
+          history: vars.history,
+        })
+      ).data,
   });
 }

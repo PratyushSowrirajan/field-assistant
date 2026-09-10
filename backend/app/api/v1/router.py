@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from app.api.v1 import (
     alerts,
     analytics,
+    assistant,
     auth,
     dashboard,
     detections,
@@ -29,6 +30,7 @@ api_router.include_router(dashboard.router)
 api_router.include_router(analytics.router)
 api_router.include_router(environment.router)
 api_router.include_router(intervention.router)
+api_router.include_router(assistant.router)
 
 # WebSocket route is mounted at the app root (not under /api/v1) so it stays a short, stable URL.
 ws_router = APIRouter()
