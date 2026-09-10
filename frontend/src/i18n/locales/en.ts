@@ -316,6 +316,8 @@ export default {
   assistant: {
     title: "Assistant",
     subtitle: "Ask about your fields, alerts, or what to do next.",
+    openLabel: "Open assistant",
+    closeLabel: "Close assistant",
     allFields: "All fields",
     emptyPrompt: "Ask anything about what's happening in your fields.",
     suggestion1: "Is my field okay right now?",

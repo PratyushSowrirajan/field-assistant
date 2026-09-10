@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet } from "react-router-dom";
+import AssistantWidget from "@/components/AssistantWidget";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -12,7 +13,6 @@ const NAV_ITEMS: { to: string; key: string; end?: boolean }[] = [
   { to: "/alerts", key: "nav.alerts" },
   // Isolated, removable feature — see src/features/leaf-check/README.md
   { to: "/leaf-check", key: "nav.leafCheck" },
-  { to: "/assistant", key: "nav.assistant" },
 ];
 
 export default function Layout() {
@@ -60,6 +60,7 @@ export default function Layout() {
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <Outlet />
       </main>
+      <AssistantWidget />
     </div>
   );
 }

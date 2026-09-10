@@ -316,6 +316,8 @@ export default {
   assistant: {
     title: "सहायक",
     subtitle: "अपने खेतों, अलर्ट या आगे क्या करना है, इस बारे में पूछें।",
+    openLabel: "सहायक खोलें",
+    closeLabel: "सहायक बंद करें",
     allFields: "सभी खेत",
     emptyPrompt: "अपने खेतों में क्या हो रहा है, इस बारे में कुछ भी पूछें।",
     suggestion1: "क्या अभी मेरा खेत ठीक है?",
