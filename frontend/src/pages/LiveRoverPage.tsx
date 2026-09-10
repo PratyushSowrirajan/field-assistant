@@ -1,4 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { USER_IMAGE_03 } from "@/assets/images";
 import FieldMap from "@/components/FieldMap";
 import { api } from "@/lib/api";
@@ -8,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { RoverLiveState } from "@/types/api";
 
 export default function LiveRoverPage() {
+  const { t } = useTranslation();
   const { data: rovers, isLoading } = useRovers();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showRegister, setShowRegister] = useState(false);
@@ -24,19 +26,19 @@ export default function LiveRoverPage() {
         <img src={USER_IMAGE_03} alt="Farmers preparing natural inputs beside the field" className="h-36 w-full object-cover sm:h-44" />
         <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/80 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-5">
-          <h1 className="text-xl font-bold text-cream sm:text-2xl">Live Rover</h1>
-          <p className="text-sm text-cream/80">Technology working inside your real field practice.</p>
+          <h1 className="text-xl font-bold text-cream sm:text-2xl">{t("liveRover.heroTitle")}</h1>
+          <p className="text-sm text-cream/80">{t("liveRover.heroSubtitle")}</p>
         </div>
       </section>
 
-      {isLoading && <p className="text-ink/60">Loading rovers...</p>}
+      {isLoading && <p className="text-ink/60">{t("liveRover.loadingRovers")}</p>}
 
       {rovers && rovers.length === 0 && !showRegister && (
         <div className="card text-center">
-          <p className="font-medium text-ink">No rover paired yet</p>
-          <p className="mt-1 text-sm text-ink/60">Register your rover's device ID to connect it to this farm.</p>
+          <p className="font-medium text-ink">{t("liveRover.noRoverPaired")}</p>
+          <p className="mt-1 text-sm text-ink/60">{t("liveRover.registerRoverHint")}</p>
           <button onClick={() => setShowRegister(true)} className="btn-primary mt-4 inline-flex">
-            Register a rover
+            {t("liveRover.registerRover")}
           </button>
         </div>
       )}
@@ -58,7 +60,7 @@ export default function LiveRoverPage() {
               </button>
             ))}
             <button onClick={() => setShowRegister((v) => !v)} className="btn-secondary px-3 py-1.5 text-xs">
-              + Add rover
+              {t("liveRover.addRover")}
             </button>
           </div>
 
@@ -70,6 +72,7 @@ export default function LiveRoverPage() {
 }
 
 function RoverPanel({ roverId, roverName }: { roverId: string; roverName: string }) {
+  const { t } = useTranslation();
   const { data: initial } = useRoverLive(roverId);
   const { lastMessage, connected } = useLiveFeed();
   const qc = useQueryClient();
@@ -107,7 +110,7 @@ function RoverPanel({ roverId, roverName }: { roverId: string; roverName: string
           />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-ink/50">
-            {live?.field_id ? "Preparing field map..." : "Rover has not reported a position in a mapped field yet."}
+            {live?.field_id ? t("liveRover.preparingMap") : t("liveRover.noMappedPosition")}
           </div>
         )}
       </div>
@@ -124,19 +127,25 @@ function RoverPanel({ roverId, roverName }: { roverId: string; roverName: string
               }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {connected && live?.connection_status === "CONNECTED" ? "Connected" : "Offline"}
+              {connected && live?.connection_status === "CONNECTED" ? t("liveRover.connected") : t("liveRover.offline")}
             </span>
           </div>
-          <p className="mt-1 text-sm font-medium text-forest">{live?.status ?? "Unknown"}</p>
-          {live?.zone_code && <p className="text-sm text-ink/60">Zone {live.zone_code}</p>}
+          <p className="mt-1 text-sm font-medium text-forest">{live?.status ?? t("liveRover.unknown")}</p>
+          {live?.zone_code && (
+            <p className="text-sm text-ink/60">
+              {t("common.zone")} {live.zone_code}
+            </p>
+          )}
           <p className="mt-2 text-xs text-ink/50">
-            {live?.last_update_at ? `Last update ${new Date(live.last_update_at).toLocaleTimeString()}` : "No updates yet"}
+            {live?.last_update_at
+              ? t("liveRover.lastUpdate", { time: new Date(live.last_update_at).toLocaleTimeString() })
+              : t("liveRover.noUpdatesYet")}
           </p>
         </div>
 
         {live?.latest_detection && (
           <div className="card">
-            <h3 className="text-sm font-semibold text-forest">Latest observation</h3>
+            <h3 className="text-sm font-semibold text-forest">{t("liveRover.latestObservation")}</h3>
             <p className="mt-1 text-sm text-ink">
               {live.latest_detection.class_name.replace(/_/g, " ")} · {(live.latest_detection.confidence * 100).toFixed(0)}%
             </p>
@@ -144,10 +153,10 @@ function RoverPanel({ roverId, roverName }: { roverId: string; roverName: string
         )}
 
         <div className="card space-y-2 text-sm">
-          <Row label="Battery" value={live?.battery_level != null ? `${live.battery_level}%` : "—"} />
-          <Row label="Speed" value={live?.speed_mps != null ? `${live.speed_mps.toFixed(1)} m/s` : "—"} />
-          <Row label="Heading" value={live?.heading_deg != null ? `${live.heading_deg}°` : "—"} />
-          <Row label="Sprayer" value={live?.sprayer_status ?? "—"} />
+          <Row label={t("liveRover.battery")} value={live?.battery_level != null ? `${live.battery_level}%` : "—"} />
+          <Row label={t("liveRover.speed")} value={live?.speed_mps != null ? `${live.speed_mps.toFixed(1)} m/s` : "—"} />
+          <Row label={t("liveRover.heading")} value={live?.heading_deg != null ? `${live.heading_deg}°` : "—"} />
+          <Row label={t("liveRover.sprayer")} value={live?.sprayer_status ?? "—"} />
         </div>
       </div>
     </div>
@@ -164,6 +173,7 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 function RegisterRoverCard({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [deviceId, setDeviceId] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
@@ -185,14 +195,11 @@ function RegisterRoverCard({ onDone }: { onDone: () => void }) {
   if (secret) {
     return (
       <div className="card max-w-lg">
-        <h3 className="font-semibold text-forest">Rover registered</h3>
-        <p className="mt-1 text-sm text-ink/70">
-          Save this device secret now — it won't be shown again. Configure it on the Raspberry Pi so it can
-          authenticate with the backend.
-        </p>
+        <h3 className="font-semibold text-forest">{t("liveRover.roverRegistered")}</h3>
+        <p className="mt-1 text-sm text-ink/70">{t("liveRover.saveSecretHint")}</p>
         <code className="mt-3 block break-all rounded-lg bg-sand p-3 text-xs">{secret}</code>
         <button onClick={onDone} className="btn-primary mt-4">
-          Done
+          {t("common.done")}
         </button>
       </div>
     );
@@ -200,18 +207,18 @@ function RegisterRoverCard({ onDone }: { onDone: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="card max-w-lg space-y-3">
-      <h3 className="font-semibold text-forest">Register a rover</h3>
+      <h3 className="font-semibold text-forest">{t("liveRover.registerRover")}</h3>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-ink/80">Rover name</span>
-        <input required value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Rover One" />
+        <span className="mb-1 block text-sm font-medium text-ink/80">{t("liveRover.roverName")}</span>
+        <input required value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder={t("liveRover.roverNamePlaceholder")} />
       </label>
       <label className="block">
-        <span className="mb-1 block text-sm font-medium text-ink/80">Device ID</span>
-        <input required value={deviceId} onChange={(e) => setDeviceId(e.target.value)} className="input" placeholder="rover-001" />
+        <span className="mb-1 block text-sm font-medium text-ink/80">{t("liveRover.deviceId")}</span>
+        <input required value={deviceId} onChange={(e) => setDeviceId(e.target.value)} className="input" placeholder={t("liveRover.deviceIdPlaceholder")} />
       </label>
-      <p className="text-xs text-ink/50">You can assign fields to this rover from the field detail screen later.</p>
+      <p className="text-xs text-ink/50">{t("liveRover.assignFieldsHint")}</p>
       <button type="submit" disabled={submitting} className="btn-primary">
-        {submitting ? "Registering..." : "Register rover"}
+        {submitting ? t("liveRover.registering") : t("liveRover.registerRover")}
       </button>
     </form>
   );

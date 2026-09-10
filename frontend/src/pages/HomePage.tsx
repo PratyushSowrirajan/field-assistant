@@ -1,18 +1,20 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { USER_IMAGE_01 } from "@/assets/images";
 import { HealthBadge, SeverityBadge } from "@/components/badges";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboard, useRovers } from "@/lib/queries";
 
-function greeting() {
+function greetingKey() {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 17) return "Good afternoon";
-  return "Good evening";
+  if (h < 12) return "home.greetingMorning";
+  if (h < 17) return "home.greetingAfternoon";
+  return "home.greetingEvening";
 }
 
 export default function HomePage() {
   const { farmer } = useAuth();
+  const { t } = useTranslation();
   const { data: dashboard, isLoading } = useDashboard();
   const { data: rovers } = useRovers();
 
@@ -26,29 +28,27 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-t from-forest-dark/85 via-forest-dark/20 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
           <p className="text-sm font-medium text-cream/80">
-            {greeting()}, {farmer?.name?.split(" ")[0] ?? "there"}.
+            {t(greetingKey())}, {farmer?.name?.split(" ")[0] ?? t("home.thereFallback")}.
           </p>
           <h1 className="mt-1 max-w-xl text-2xl font-bold text-cream sm:text-3xl">
             {dashboard && dashboard.fields_requiring_attention > 0
-              ? `${dashboard.fields_requiring_attention} field${dashboard.fields_requiring_attention > 1 ? "s" : ""} need attention today.`
-              : "Your fields look steady today."}
+              ? t("home.fieldsNeedAttention", { count: dashboard.fields_requiring_attention })
+              : t("home.fieldsLookSteady")}
           </h1>
-          <p className="mt-1 text-sm text-cream/80">
-            Know what's happening in your field before the problem spreads.
-          </p>
+          <p className="mt-1 text-sm text-cream/80">{t("home.heroSubtitle")}</p>
         </div>
       </section>
 
-      {isLoading && <p className="text-ink/60">Loading your fields...</p>}
+      {isLoading && <p className="text-ink/60">{t("common.loading")}</p>}
 
       {dashboard && (
         <>
           {/* Field overview */}
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-forest">Your fields, at a glance</h2>
+              <h2 className="text-lg font-semibold text-forest">{t("home.yourFieldsGlance")}</h2>
               <Link to="/fields" className="text-sm font-medium text-forest hover:underline">
-                View all fields
+                {t("home.viewAllFields")}
               </Link>
             </div>
             {dashboard.fields.length === 0 ? (
@@ -60,13 +60,17 @@ export default function HomePage() {
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <h3 className="font-semibold text-ink">{f.name}</h3>
-                        <p className="text-sm text-ink/60">{f.crop_type ?? "Crop not set"}</p>
+                        <p className="text-sm text-ink/60">{f.crop_type ?? t("common.cropNotSet")}</p>
                       </div>
                       <HealthBadge status={f.health_status} />
                     </div>
                     {f.top_issue && <p className="mt-3 text-sm text-ink/80 line-clamp-2">{f.top_issue}</p>}
                     <div className="mt-3 flex items-center justify-between text-xs text-ink/50">
-                      <span>{f.last_scan_at ? `Last scan ${new Date(f.last_scan_at).toLocaleString()}` : "No scans yet"}</span>
+                      <span>
+                        {f.last_scan_at
+                          ? t("home.lastScan", { time: new Date(f.last_scan_at).toLocaleString() })
+                          : t("home.noScansYet")}
+                      </span>
                       {f.rover_status && <span className="font-medium text-leaf-dark">{f.rover_status}</span>}
                     </div>
                   </Link>
@@ -78,9 +82,9 @@ export default function HomePage() {
           {/* Needs attention + live activity */}
           <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="card">
-              <h2 className="mb-3 text-base font-semibold text-forest">Needs attention</h2>
+              <h2 className="mb-3 text-base font-semibold text-forest">{t("home.needsAttention")}</h2>
               {dashboard.top_alerts.length === 0 ? (
-                <p className="text-sm text-ink/60">No active alerts. Your fields are quiet right now.</p>
+                <p className="text-sm text-ink/60">{t("home.noActiveAlerts")}</p>
               ) : (
                 <ul className="space-y-3">
                   {dashboard.top_alerts.map((a) => (
@@ -94,7 +98,7 @@ export default function HomePage() {
                           <p className="text-sm text-ink">{a.message}</p>
                           <p className="text-xs text-ink/50">
                             {a.field_name}
-                            {a.zone_code ? ` · Zone ${a.zone_code}` : ""}
+                            {a.zone_code ? ` · ${t("common.zone")} ${a.zone_code}` : ""}
                           </p>
                         </div>
                       </Link>
@@ -105,9 +109,9 @@ export default function HomePage() {
             </div>
 
             <div className="card">
-              <h2 className="mb-3 text-base font-semibold text-forest">Current rover activity</h2>
+              <h2 className="mb-3 text-base font-semibold text-forest">{t("home.currentRoverActivity")}</h2>
               {activeRovers.length === 0 ? (
-                <p className="text-sm text-ink/60">No rover is active right now.</p>
+                <p className="text-sm text-ink/60">{t("home.noActiveRover")}</p>
               ) : (
                 <ul className="space-y-3">
                   {activeRovers.map((r) => (
@@ -132,12 +136,13 @@ export default function HomePage() {
 }
 
 function EmptyFieldsCard() {
+  const { t } = useTranslation();
   return (
     <div className="card text-center">
-      <p className="font-medium text-ink">No fields yet</p>
-      <p className="mt-1 text-sm text-ink/60">Add your first field to start building its health map.</p>
+      <p className="font-medium text-ink">{t("home.noFieldsYet")}</p>
+      <p className="mt-1 text-sm text-ink/60">{t("home.addFirstFieldHint")}</p>
       <Link to="/fields/new" className="btn-primary mt-4 inline-flex">
-        Add a field
+        {t("home.addAField")}
       </Link>
     </div>
   );

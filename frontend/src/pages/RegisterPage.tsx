@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AuthShell, Field } from "./LoginPage";
@@ -6,6 +7,7 @@ import { AuthShell, Field } from "./LoginPage";
 export default function RegisterPage() {
   const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -23,19 +25,19 @@ export default function RegisterPage() {
       await register(name, email, password, phone || undefined);
       navigate("/");
     } catch (err: any) {
-      setError(err?.response?.data?.detail || "Could not create your account.");
+      setError(err?.response?.data?.detail || t("auth.couldNotCreateAccount"));
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <AuthShell title="Create your account" subtitle="Set up your farm in a few minutes.">
+    <AuthShell title={t("auth.createYourAccount")} subtitle={t("auth.createAccountSubtitle")}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Full name">
+        <Field label={t("auth.fullName")}>
           <input required value={name} onChange={(e) => setName(e.target.value)} className="input" />
         </Field>
-        <Field label="Email">
+        <Field label={t("auth.email")}>
           <input
             type="email"
             required
@@ -44,10 +46,10 @@ export default function RegisterPage() {
             className="input"
           />
         </Field>
-        <Field label="Phone (optional)">
+        <Field label={t("auth.phoneOptional")}>
           <input value={phone} onChange={(e) => setPhone(e.target.value)} className="input" />
         </Field>
-        <Field label="Password">
+        <Field label={t("auth.password")}>
           <input
             type="password"
             required
@@ -59,13 +61,13 @@ export default function RegisterPage() {
         </Field>
         {error && <p className="text-sm text-risk-critical">{error}</p>}
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Creating account..." : "Create account"}
+          {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-ink/70">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link to="/login" className="font-semibold text-forest hover:underline">
-          Sign in
+          {t("auth.signIn")}
         </Link>
       </p>
     </AuthShell>

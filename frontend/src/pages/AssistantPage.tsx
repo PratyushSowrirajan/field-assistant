@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useAllFields, useAskAssistant, useFarms } from "@/lib/queries";
 import type { ChatTurn } from "@/types/api";
 
@@ -8,14 +9,10 @@ interface Message extends ChatTurn {
   error?: boolean;
 }
 
-const SUGGESTIONS = [
-  "Is my field okay right now?",
-  "Should I irrigate today?",
-  "What's the biggest risk in my field?",
-  "What should I do about the latest alert?",
-];
+const SUGGESTION_KEYS = ["assistant.suggestion1", "assistant.suggestion2", "assistant.suggestion3", "assistant.suggestion4"];
 
 export default function AssistantPage() {
+  const { t } = useTranslation();
   const { data: farms } = useFarms();
   const { data: allFields } = useAllFields(farms);
   const fields = (allFields ?? []).filter((f) => !f.archived);
@@ -55,12 +52,12 @@ export default function AssistantPage() {
     <div className="mx-auto flex h-[calc(100vh-140px)] max-w-2xl flex-col">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h1 className="text-xl font-bold text-forest">Assistant</h1>
-          <p className="text-sm text-ink/60">Ask about your fields, alerts, or what to do next.</p>
+          <h1 className="text-xl font-bold text-forest">{t("assistant.title")}</h1>
+          <p className="text-sm text-ink/60">{t("assistant.subtitle")}</p>
         </div>
         {fields.length > 0 && (
           <select value={fieldId} onChange={(e) => setFieldId(e.target.value)} className="input w-auto">
-            <option value="">All fields</option>
+            <option value="">{t("assistant.allFields")}</option>
             {fields.map((f) => (
               <option key={f.id} value={f.id}>
                 {f.name}
@@ -73,15 +70,15 @@ export default function AssistantPage() {
       <div ref={listRef} className="card flex-1 space-y-3 overflow-y-auto">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-4 py-6 text-center">
-            <p className="text-sm text-ink/60">Ask anything about what's happening in your fields.</p>
+            <p className="text-sm text-ink/60">{t("assistant.emptyPrompt")}</p>
             <div className="flex flex-wrap justify-center gap-2">
-              {SUGGESTIONS.map((s) => (
+              {SUGGESTION_KEYS.map((key) => (
                 <button
-                  key={s}
-                  onClick={() => send(s)}
+                  key={key}
+                  onClick={() => send(t(key))}
                   className="rounded-full border border-sand bg-sand/40 px-3 py-1.5 text-xs font-medium text-ink/70 hover:bg-sand"
                 >
-                  {s}
+                  {t(key)}
                 </button>
               ))}
             </div>
@@ -101,7 +98,7 @@ export default function AssistantPage() {
             >
               <p className="whitespace-pre-wrap">{m.content}</p>
               {m.sources && m.sources.length > 0 && (
-                <p className="mt-1.5 text-[11px] text-ink/40">Based on: {m.sources.join(", ")}</p>
+                <p className="mt-1.5 text-[11px] text-ink/40">{t("assistant.basedOn", { sources: m.sources.join(", ") })}</p>
               )}
             </div>
           </div>
@@ -109,7 +106,7 @@ export default function AssistantPage() {
 
         {ask.isPending && (
           <div className="flex justify-start">
-            <div className="max-w-[85%] rounded-xl2 bg-sand/60 px-4 py-2.5 text-sm text-ink/50">Thinking...</div>
+            <div className="max-w-[85%] rounded-xl2 bg-sand/60 px-4 py-2.5 text-sm text-ink/50">{t("assistant.thinking")}</div>
           </div>
         )}
       </div>
@@ -124,12 +121,12 @@ export default function AssistantPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question..."
+          placeholder={t("assistant.placeholder")}
           className="input flex-1"
           maxLength={500}
         />
         <button type="submit" disabled={ask.isPending || !input.trim()} className="btn-primary px-5">
-          Send
+          {t("assistant.send")}
         </button>
       </form>
     </div>

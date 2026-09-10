@@ -1,9 +1,11 @@
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { checkLeafImage, LeafCheckError, parseLabel, type LeafCheckResult } from "./api";
 
 type Status = "idle" | "loading" | "done" | "error";
 
 export default function LeafCheckPage() {
+  const { t } = useTranslation();
   const [status, setStatus] = useState<Status>("idle");
   const [preview, setPreview] = useState<string | null>(null);
   const [result, setResult] = useState<LeafCheckResult | null>(null);
@@ -35,16 +37,14 @@ export default function LeafCheckPage() {
   }
 
   const top = result ? parseLabel(result.predicted_class) : null;
+  const cropLabel = top?.crop === "Eggplant" ? t("leafCheck.eggplantCrop") : top?.crop;
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-forest">Leaf Check</h1>
-        <p className="mt-1 text-sm text-ink/70">
-          Not near the rover, or want a second opinion? Upload a close-up photo of an eggplant leaf and get an
-          instant read on what might be affecting it.
-        </p>
-        <p className="mt-1 text-xs text-ink/50">Currently trained on eggplant leaves only.</p>
+        <h1 className="text-xl font-bold text-forest">{t("leafCheck.title")}</h1>
+        <p className="mt-1 text-sm text-ink/70">{t("leafCheck.subtitle")}</p>
+        <p className="mt-1 text-xs text-ink/50">{t("leafCheck.scopeNote")}</p>
       </div>
 
       <div className="card">
@@ -64,9 +64,9 @@ export default function LeafCheckPage() {
 
           <div className="flex flex-col items-center gap-2">
             <button type="button" onClick={() => fileInputRef.current?.click()} className="btn-primary">
-              {preview ? "Choose a different photo" : "Upload a leaf photo"}
+              {preview ? t("leafCheck.chooseDifferent") : t("leafCheck.uploadPhoto")}
             </button>
-            <p className="text-xs text-ink/50">JPG, PNG or WEBP · one leaf, filling most of the frame, in good light</p>
+            <p className="text-xs text-ink/50">{t("leafCheck.formatHint")}</p>
           </div>
 
           <input
@@ -78,9 +78,7 @@ export default function LeafCheckPage() {
           />
         </div>
 
-        {status === "loading" && (
-          <p className="mt-4 text-center text-sm text-ink/60">Reading the leaf image...</p>
-        )}
+        {status === "loading" && <p className="mt-4 text-center text-sm text-ink/60">{t("leafCheck.reading")}</p>}
 
         {status === "error" && error && (
           <div className="mt-4 rounded-lg bg-risk-critical/10 px-4 py-3 text-sm text-risk-critical">{error}</div>
@@ -93,33 +91,30 @@ export default function LeafCheckPage() {
                 top.healthy ? "border-risk-healthy/30 bg-risk-healthy/10" : "border-risk-attention/30 bg-risk-attention/10"
               }`}
             >
-              <p className="text-xs font-medium uppercase tracking-wide text-ink/50">Crop</p>
-              <p className="text-lg font-bold text-ink">{top.crop}</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-ink/50">{t("leafCheck.crop")}</p>
+              <p className="text-lg font-bold text-ink">{cropLabel}</p>
               <p className="mt-2 text-xs font-medium uppercase tracking-wide text-ink/50">
-                {top.healthy ? "Condition" : "Possible issue"}
+                {top.healthy ? t("leafCheck.condition") : t("leafCheck.possibleIssue")}
               </p>
               <p className={`text-lg font-bold ${top.healthy ? "text-risk-healthy" : "text-risk-attention"}`}>
-                {top.condition}
+                {t(`leafCheck.classes.${top.condition}`, top.condition)}
               </p>
-              <p className="mt-2 text-sm text-ink/70">Confidence: {(result.confidence * 100).toFixed(0)}%</p>
+              <p className="mt-2 text-sm text-ink/70">
+                {t("leafCheck.confidence", { pct: (result.confidence * 100).toFixed(0) })}
+              </p>
             </div>
 
-            <p className="rounded-lg bg-sand/60 px-3 py-2 text-xs text-ink/60">
-              This is an automated estimate from a photo, not a confirmed diagnosis. Inspect the plant closely, and
-              treat it the same way you would a rover detection — confirm before acting.
-            </p>
+            <p className="rounded-lg bg-sand/60 px-3 py-2 text-xs text-ink/60">{t("leafCheck.disclaimer")}</p>
 
             {result.top_predictions.length > 1 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink/50">Other possibilities</p>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink/50">{t("leafCheck.otherPossibilities")}</p>
                 <ul className="space-y-1.5">
                   {result.top_predictions.slice(1).map((p, i) => {
                     const alt = parseLabel(p.label);
                     return (
                       <li key={i} className="flex items-center justify-between text-sm text-ink/70">
-                        <span>
-                          {alt.crop} — {alt.condition}
-                        </span>
+                        <span>{t(`leafCheck.classes.${alt.condition}`, alt.condition)}</span>
                         <span className="text-ink/40">{(p.confidence * 100).toFixed(0)}%</span>
                       </li>
                     );
@@ -129,7 +124,7 @@ export default function LeafCheckPage() {
             )}
 
             <button type="button" onClick={reset} className="btn-secondary w-full">
-              Check another photo
+              {t("leafCheck.checkAnother")}
             </button>
           </div>
         )}

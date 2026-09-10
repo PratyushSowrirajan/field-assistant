@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Bar, BarChart } from "recharts";
 import { useAllFields, useFarms, useInsights, useTimeSeries, useYieldRisk } from "@/lib/queries";
 import { SeverityBadge } from "@/components/badges";
 
 const SECTIONS = ["Crop Health", "Environment", "Operations", "Risk"] as const;
 type Section = (typeof SECTIONS)[number];
+const SECTION_KEY: Record<Section, string> = {
+  "Crop Health": "insights.sections.cropHealth",
+  Environment: "insights.sections.environment",
+  Operations: "insights.sections.operations",
+  Risk: "insights.sections.risk",
+};
 
 export default function InsightsPage() {
+  const { t } = useTranslation();
   const { data: farms } = useFarms();
   const { data: fields } = useAllFields(farms);
   const [fieldId, setFieldId] = useState<string>("");
@@ -17,13 +25,13 @@ export default function InsightsPage() {
   }, [fields, fieldId]);
 
   if (fields && fields.length === 0) {
-    return <p className="text-ink/60">Add a field to start seeing insights.</p>;
+    return <p className="text-ink/60">{t("insights.addFieldHint")}</p>;
   }
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-bold text-forest">Insights</h1>
+        <h1 className="text-xl font-bold text-forest">{t("insights.title")}</h1>
         <select value={fieldId} onChange={(e) => setFieldId(e.target.value)} className="input w-auto">
           {fields?.map((f) => (
             <option key={f.id} value={f.id}>
@@ -42,7 +50,7 @@ export default function InsightsPage() {
               section === s ? "border-forest text-forest" : "border-transparent text-ink/50 hover:text-ink"
             }`}
           >
-            {s}
+            {t(SECTION_KEY[s])}
           </button>
         ))}
       </div>
@@ -66,11 +74,12 @@ function ChartCard({ title, question, children }: { title: string; question: str
 }
 
 function TrendLine({ fieldId, metric, color }: { fieldId: string; metric: string; color: string }) {
+  const { t } = useTranslation();
   const { data = [] } = useTimeSeries(fieldId, metric);
   const chartData = data.map((p) => ({ date: new Date(p.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" }), value: p.value }));
 
   if (chartData.length === 0) {
-    return <div className="flex h-full items-center justify-center text-xs text-ink/40">No data yet</div>;
+    return <div className="flex h-full items-center justify-center text-xs text-ink/40">{t("common.noDataYet")}</div>;
   }
 
   return (
@@ -86,11 +95,12 @@ function TrendLine({ fieldId, metric, color }: { fieldId: string; metric: string
 }
 
 function TrendBar({ fieldId, metric, color }: { fieldId: string; metric: string; color: string }) {
+  const { t } = useTranslation();
   const { data = [] } = useTimeSeries(fieldId, metric);
   const chartData = data.map((p) => ({ date: new Date(p.timestamp).toLocaleDateString(undefined, { month: "short", day: "numeric" }), value: p.value }));
 
   if (chartData.length === 0) {
-    return <div className="flex h-full items-center justify-center text-xs text-ink/40">No data yet</div>;
+    return <div className="flex h-full items-center justify-center text-xs text-ink/40">{t("common.noDataYet")}</div>;
   }
 
   return (
@@ -106,15 +116,16 @@ function TrendBar({ fieldId, metric, color }: { fieldId: string; metric: string;
 }
 
 function CropHealthSection({ fieldId }: { fieldId: string }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <ChartCard title="Disease detections over time" question="Is the problem increasing or decreasing?">
+      <ChartCard title={t("insights.diseaseDetections")} question={t("insights.diseaseQuestion")}>
         <TrendLine fieldId={fieldId} metric="disease" color="#C1502E" />
       </ChartCard>
-      <ChartCard title="Pest detections over time" question="Is pest activity spreading?">
+      <ChartCard title={t("insights.pestDetections")} question={t("insights.pestQuestion")}>
         <TrendLine fieldId={fieldId} metric="pest" color="#C89B2E" />
       </ChartCard>
-      <ChartCard title="Nutrient deficiency trend" question="Are nutrient issues becoming more common?">
+      <ChartCard title={t("insights.nutrientTrend")} question={t("insights.nutrientQuestion")}>
         <TrendLine fieldId={fieldId} metric="nutrient" color="#7A7550" />
       </ChartCard>
     </div>
@@ -122,15 +133,16 @@ function CropHealthSection({ fieldId }: { fieldId: string }) {
 }
 
 function EnvironmentSection({ fieldId }: { fieldId: string }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <ChartCard title="Soil moisture" question="Is the field becoming too dry?">
+      <ChartCard title={t("insights.soilMoisture")} question={t("insights.soilMoistureQuestion")}>
         <TrendLine fieldId={fieldId} metric="soil_moisture" color="#2B5039" />
       </ChartCard>
-      <ChartCard title="Temperature" question="Is heat stress building up?">
+      <ChartCard title={t("insights.temperature")} question={t("insights.temperatureQuestion")}>
         <TrendLine fieldId={fieldId} metric="temperature" color="#D97B2B" />
       </ChartCard>
-      <ChartCard title="Humidity" question="Are conditions favorable for disease?">
+      <ChartCard title={t("insights.humidity")} question={t("insights.humidityQuestion")}>
         <TrendLine fieldId={fieldId} metric="humidity" color="#4C7A3F" />
       </ChartCard>
     </div>
@@ -138,12 +150,13 @@ function EnvironmentSection({ fieldId }: { fieldId: string }) {
 }
 
 function OperationsSection({ fieldId }: { fieldId: string }) {
+  const { t } = useTranslation();
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <ChartCard title="Irrigation history" question="How often has this field been irrigated?">
+      <ChartCard title={t("insights.irrigationHistory")} question={t("insights.irrigationQuestion")}>
         <TrendBar fieldId={fieldId} metric="irrigation" color="#2B5039" />
       </ChartCard>
-      <ChartCard title="Treatment history" question="How often has this field been treated?">
+      <ChartCard title={t("insights.treatmentHistory")} question={t("insights.treatmentQuestion")}>
         <TrendBar fieldId={fieldId} metric="treatment" color="#8A5A3B" />
       </ChartCard>
     </div>
@@ -151,13 +164,14 @@ function OperationsSection({ fieldId }: { fieldId: string }) {
 }
 
 function RiskSection({ fieldId }: { fieldId: string }) {
+  const { t } = useTranslation();
   const { data: yieldRisk } = useYieldRisk(fieldId);
   const { data: insights = [] } = useInsights(fieldId);
 
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-forest">Yield risk indicator</h3>
+        <h3 className="mb-2 text-sm font-semibold text-forest">{t("insights.yieldRiskIndicator")}</h3>
         {yieldRisk ? (
           <>
             <SeverityBadge severity={yieldRisk.yield_risk} />
@@ -168,14 +182,14 @@ function RiskSection({ fieldId }: { fieldId: string }) {
             </ul>
           </>
         ) : (
-          <p className="text-sm text-ink/60">Loading...</p>
+          <p className="text-sm text-ink/60">{t("common.loading")}</p>
         )}
       </div>
 
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold text-forest">What's changing</h3>
+        <h3 className="mb-2 text-sm font-semibold text-forest">{t("insights.whatsChanging")}</h3>
         {insights.length === 0 ? (
-          <p className="text-sm text-ink/60">Nothing significant to flag right now.</p>
+          <p className="text-sm text-ink/60">{t("insights.nothingToFlag")}</p>
         ) : (
           <ul className="space-y-2">
             {insights.map((i, idx) => (

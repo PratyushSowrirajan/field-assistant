@@ -1,20 +1,23 @@
+import { useTranslation } from "react-i18next";
 import { NavLink, Outlet } from "react-router-dom";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Home", end: true },
-  { to: "/overview", label: "Overview" },
-  { to: "/fields", label: "Fields" },
-  { to: "/live", label: "Live Rover" },
-  { to: "/insights", label: "Insights" },
-  { to: "/alerts", label: "Alerts" },
+const NAV_ITEMS: { to: string; key: string; end?: boolean }[] = [
+  { to: "/", key: "nav.home", end: true },
+  { to: "/overview", key: "nav.overview" },
+  { to: "/fields", key: "nav.fields" },
+  { to: "/live", key: "nav.liveRover" },
+  { to: "/insights", key: "nav.insights" },
+  { to: "/alerts", key: "nav.alerts" },
   // Isolated, removable feature — see src/features/leaf-check/README.md
-  { to: "/leaf-check", label: "Leaf Check" },
-  { to: "/assistant", label: "Assistant" },
+  { to: "/leaf-check", key: "nav.leafCheck" },
+  { to: "/assistant", key: "nav.assistant" },
 ];
 
 export default function Layout() {
   const { farmer, logout } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen bg-cream">
@@ -24,15 +27,16 @@ export default function Layout() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-forest text-cream">
               <LeafIcon className="h-5 w-5" />
             </div>
-            <span className="text-lg font-semibold text-forest">Smart Farming Assistant</span>
+            <span className="text-lg font-semibold text-forest">{t("nav.productName")}</span>
           </div>
           <div className="flex items-center gap-3">
+            <LanguageSwitcher />
             <span className="hidden text-sm text-ink/70 sm:inline">{farmer?.name}</span>
             <button
               onClick={logout}
               className="rounded-md border border-sand px-3 py-1.5 text-sm text-ink/70 hover:bg-sand"
             >
-              Sign out
+              {t("nav.signOut")}
             </button>
           </div>
         </div>
@@ -48,7 +52,7 @@ export default function Layout() {
                 }`
               }
             >
-              {item.label}
+              {t(item.key)}
             </NavLink>
           ))}
         </nav>
