@@ -7,6 +7,8 @@ const NAV_ITEMS = [
   { to: "/live", label: "Live Rover" },
   { to: "/insights", label: "Insights" },
   { to: "/alerts", label: "Alerts" },
+  // Isolated, removable feature — see src/features/leaf-check/README.md
+  { to: "/leaf-check", label: "Leaf Check" },
 ];
 
 export default function Layout() {

@@ -10,6 +10,8 @@ import LiveRoverPage from "@/pages/LiveRoverPage";
 import LoginPage from "@/pages/LoginPage";
 import NewFieldPage from "@/pages/NewFieldPage";
 import RegisterPage from "@/pages/RegisterPage";
+// Isolated, removable feature — see src/features/leaf-check/README.md
+import LeafCheckPage from "@/features/leaf-check/LeafCheckPage";
 
 function Protected({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -46,6 +48,8 @@ export default function App() {
         <Route path="/live" element={<LiveRoverPage />} />
         <Route path="/insights" element={<InsightsPage />} />
         <Route path="/alerts" element={<AlertsPage />} />
+        {/* Isolated, removable feature — see src/features/leaf-check/README.md */}
+        <Route path="/leaf-check" element={<LeafCheckPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
