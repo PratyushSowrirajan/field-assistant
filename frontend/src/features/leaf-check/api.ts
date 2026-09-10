@@ -41,11 +41,12 @@ export async function checkLeafImage(file: File): Promise<LeafCheckResult> {
   return response.json();
 }
 
-/** "Tomato___Late_blight" -> { crop: "Tomato", condition: "Late blight", healthy: false } */
+/** The classifier is currently trained on eggplant leaves only (see
+ * experiments/plant_disease_classifier/README.md) — its labels are already
+ * plain human-readable strings like "Leaf Spot Disease" or "Healthy Leaf",
+ * with no crop prefix, so there's no PlantVillage-style "Crop___Condition"
+ * splitting needed here anymore. */
 export function parseLabel(label: string): { crop: string; condition: string; healthy: boolean } {
-  const [rawCrop, rawCondition] = label.split("___");
-  const crop = (rawCrop || label).replace(/_/g, " ").trim();
-  const condition = (rawCondition || "").replace(/_/g, " ").trim();
-  const healthy = condition.toLowerCase() === "healthy" || condition === "";
-  return { crop, condition: healthy ? "Healthy" : condition, healthy };
+  const healthy = label.toLowerCase().includes("healthy");
+  return { crop: "Eggplant", condition: label, healthy };
 }

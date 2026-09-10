@@ -1,9 +1,10 @@
 # Leaf Check (isolated, removable feature)
 
-Lets a farmer upload a photo of a leaf and get an instant disease/pest read,
-without needing the rover. Backed by the standalone classifier service in
-`experiments/plant_disease_classifier/` (a pretrained Hugging Face model,
-not connected to the main database, zones, or alert pipeline).
+Lets a farmer upload a photo of an eggplant leaf and get an instant
+disease/pest read, without needing the rover. Backed by the standalone
+classifier service in `experiments/plant_disease_classifier/` (a pretrained
+MobileNetV2 checkpoint from Pragkya/Plant-Detection, not connected to the
+main database, zones, or alert pipeline).
 
 This folder is deliberately self-contained so it can be deleted with almost
 no trace:

@@ -8,9 +8,9 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from inference import MODEL_ID, get_classifier, predict
+from inference import MODEL_NAME, get_classifier, predict
 
-app = FastAPI(title="Plant Disease Classifier (experiment)")
+app = FastAPI(title="Eggplant Leaf Disease Classifier (experiment)")
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,14 +35,14 @@ class PredictResponse(BaseModel):
 
 @app.on_event("startup")
 def warm_up():
-    # Loads (and downloads, on first run) the model once at startup instead of
-    # on the first request, so the first real prediction isn't slow.
+    # Loads the model checkpoint once at startup instead of on the first
+    # request, so the first real prediction isn't slow.
     get_classifier()
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "model": MODEL_ID}
+    return {"status": "ok", "model": MODEL_NAME}
 
 
 @app.post("/predict", response_model=PredictResponse)

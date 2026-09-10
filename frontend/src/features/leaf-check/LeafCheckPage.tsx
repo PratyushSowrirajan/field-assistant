@@ -41,9 +41,10 @@ export default function LeafCheckPage() {
       <div>
         <h1 className="text-xl font-bold text-forest">Leaf Check</h1>
         <p className="mt-1 text-sm text-ink/70">
-          Not near the rover, or want a second opinion? Upload a close-up photo of a leaf and get an instant read on
-          what might be affecting it.
+          Not near the rover, or want a second opinion? Upload a close-up photo of an eggplant leaf and get an
+          instant read on what might be affecting it.
         </p>
+        <p className="mt-1 text-xs text-ink/50">Currently trained on eggplant leaves only.</p>
       </div>
 
       <div className="card">
