@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: sfa-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sfa-postgres
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: DEVICE_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      - key: OPENWEATHER_API_KEY
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: LLM_MODEL
+        value: openai/gpt-oss-20b
+      - key: CORS_ORIGINS
+        value: http://localhost:5173,http://localhost:5175
+      - key: DEFAULT_ZONE_RESOLUTION_M
+        value: "10"
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+databases:
+  - name: sfa-postgres
+    plan: free
+    databaseName: smart_farming
+    user: sfa
